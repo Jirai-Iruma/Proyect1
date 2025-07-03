@@ -1,11 +1,8 @@
 import os
 import sys
 import getpass
-#getpass ya viene incluido en la libreria de Python
 import msvcrt
-#msvcrt ya viene incluido en la libreria de Python
 from dotenv import load_dotenv  
-#pip install python-dotenv
 from datetime import date
 
 def fechact():
@@ -62,21 +59,21 @@ def dgleerpass(clave, prompt, clearpant=True,retries=3, reminder='\n\tResponda d
 def dgcrear_arch_producto(nom_arch_prodcto):
     modo='a'
     with open(nom_arch_prodcto,modo) as arc:
-        el_borra_pantalla
+        el_borra_pantalla()
         producto=input('\tIndique el codigo del producto  [-1 para finalizar] ')
         while len(producto)>0 and producto!='-1':
             denominacion=input(f'\tIndique la denominacion del producto: ')
-            precref= float(input(f'\tIndique la precio de referencia: '))
+            precref= float(input(f'\tIndique el precio de referencia: '))
             descuento= float(input(f'\tIndique el descuento : '))
-            excento=input(f'\tIndique si esta excento de iva (s/n): ').lower()
+            excento=input(f'\tIndique si tiene iva (s/n): ').lower()
             reg=f'{producto},{denominacion},{precref},{descuento},{excento}\n'
             arc.write(reg)
-            el_borra_pantalla
+            el_borra_pantalla()
             producto=input('\tIndique el codigo del producto  [-1 para finalizar] ')
 
 def dgcrear_arch_ref_BCV():
     f=fechact()
-    el_borra_pantalla
+    el_borra_pantalla()
     try:
         ref=float(input(f'\tIndique el precio del $ para el {f}? '))
     except:
@@ -217,8 +214,37 @@ if __name__=="__main__":
                             quit()
 
                     if opc == "2":
-                        productos=leer_acrchivo_lista_productos(arc_producto)
-                        nohaydatos=len(productos)==0
+                        el_borra_pantalla()
+                        codigo = input("\tIngrese el código del producto a modificar: ").strip()
+                        productos = leer_acrchivo_lista_productos(arc_producto)
+                        encontrado = False
+                        for i, prod in enumerate(productos):
+                            if prod[0] == codigo:
+                                print(f"\tProducto actual: {prod}")
+                                nueva_denominacion = input(f"\tNueva denominación [{prod[1]}]: ").strip() or prod[1]
+                                try:
+                                    nuevo_precio = input(f"\tNuevo precio de referencia [{prod[2]}]: ").strip()
+                                    nuevo_precio = float(nuevo_precio) if nuevo_precio else prod[2]
+                                except ValueError:
+                                    nuevo_precio = prod[2]
+                                try:
+                                    nuevo_descuento = input(f'\tNuevo descuento [{prod[3]}]: ').strip()
+                                    nuevo_descuento = float(nuevo_descuento) if nuevo_descuento else prod[3]
+                                except ValueError:
+                                    nuevo_descuento = prod[3]
+                                nuevo_excento = input(f'\t¿Tiene IVA? (s/n) [{prod[4]}]: ').strip().lower() or prod[4]
+                                productos[i] = [codigo, nueva_denominacion, nuevo_precio, nuevo_descuento, nuevo_excento]
+                                encontrado = True
+                                break
+                        if encontrado:
+                            with open(arc_producto, 'w') as nueva:
+                                for p in productos:
+                                    nueva.write(f"{p[0]},{p[1]},{p[2]},{p[3]},{p[4]}\n")
+                            el_borra_pantalla()
+                            print(f"\n\t{d[2]}Producto modificado exitosamente.{d[0]}\n\t[{p[0]},{p[1]},{p[2]},{p[3]},{p[4]}]\n")
+                        else:
+                            print(f"\n\t{d[1]}Producto no encontrado.{d[0]}")
+                        dgpause()
                     
                     menuadmin()
                     opc = input(f'\n\t{d[4]}Ingrese una opción: {d[0]}')
@@ -238,7 +264,7 @@ if __name__=="__main__":
             dgpause()
         if opcion == "3":
             el_borra_pantalla()
-            nombre_del_producto = input("\tBIENVENIDO\n\tIndique el código o nombre del producto: ").strip()
+            nombre_del_producto = input("\tBIENVENIDO\n\tIndique el código del producto: ").strip()
             prod = busca_producto(productos, nombre_del_producto)
             if not prod:
                 print(f"\n\t{d[1]}Producto no encontrado.{d[0]}")
@@ -246,15 +272,17 @@ if __name__=="__main__":
             else:
                 try:
                     peso = float(input(f"\tIngrese el peso en kg: "))
-                    if prod[4]:
+                    if prod[4]=="s":
+                        el_borra_pantalla()
                         valor = prod[2] * peso * (1 - prod[3])
                         valor_con_iva = valor * 1.16
-                        print(f"El valor a pagar por {peso} kg de {prod[1]} es: {valor_con_iva}")
+                        print(f"El valor a pagar por {peso} kg de {prod[1]} es: {valor_con_iva}$ / {valor_con_iva*ref} bolivares")
                     else:
+                        el_borra_pantalla()
                         valor = (prod[2] * peso * (1 - prod[3]))
-                        print(f"El valor a pagar por {peso} kg de {prod[1]} es: {valor}")
+                        print(f"El valor a pagar por {peso} kg de {prod[1]} es: {valor}$ / {valor*ref} bolivares")
                 except Exception as e:
-                    print(f"\n\t{d[1]}Error en el peso proseso.")
+                    print(f"\n\t{d[1]}Error en el proceso.")
                 dgpause()
 
         menu()
